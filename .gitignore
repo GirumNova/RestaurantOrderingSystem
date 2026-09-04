@@ -1,0 +1,22 @@
+# .NET build and user files
+**/bin/
+**/obj/
+*.user
+*.userosscache
+*.sln.docstates
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# ASP.NET configuration
+appsettings.Development.json
+
+# Node dependencies and build files
+client/node_modules/
+client/dist/
+
+# OS files
+.DS_Store
+Thumbs.db
