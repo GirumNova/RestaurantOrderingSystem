@@ -49,4 +49,70 @@ public sealed class NotificationService : INotificationService
                         "Your Staff account password has been changed. Please check your email for the new credentials."
                 });
     }
+    public async Task NotifyCategoryCreatedAsync(
+    object category)
+{
+    ArgumentNullException.ThrowIfNull(category);
+
+    await _hubContext.Clients
+        .All
+        .SendAsync(
+            "CategoryCreated",
+            category);
+}
+
+public async Task NotifyCategoryUpdatedAsync(
+    object category)
+{
+    ArgumentNullException.ThrowIfNull(category);
+
+    await _hubContext.Clients
+        .All
+        .SendAsync(
+            "CategoryUpdated",
+            category);
+}
+
+public async Task NotifyCategoryDeletedAsync(
+    int categoryId)
+{
+    await _hubContext.Clients
+        .All
+        .SendAsync(
+            "CategoryDeleted",
+            categoryId);
+}
+public async Task NotifyMenuItemCreatedAsync(
+    object menuItem)
+{
+    ArgumentNullException.ThrowIfNull(menuItem);
+
+    await _hubContext.Clients
+        .All
+        .SendAsync(
+            "MenuItemCreated",
+            menuItem);
+}
+
+public async Task NotifyMenuItemUpdatedAsync(
+    object menuItem)
+{
+    ArgumentNullException.ThrowIfNull(menuItem);
+
+    await _hubContext.Clients
+        .All
+        .SendAsync(
+            "MenuItemUpdated",
+            menuItem);
+}
+
+public async Task NotifyMenuItemDeletedAsync(
+    int menuItemId)
+{
+    await _hubContext.Clients
+        .All
+        .SendAsync(
+            "MenuItemDeleted",
+            menuItemId);
+}
 }

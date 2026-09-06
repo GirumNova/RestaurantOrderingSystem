@@ -18,6 +18,9 @@ public class ApplicationDbContext : DbContext
 public DbSet<PasswordChangeRequest> PasswordChangeRequests =>
     Set<PasswordChangeRequest>();
 public DbSet<Category> Categories => Set<Category>();
+
+public DbSet<MenuItem> MenuItems => Set<MenuItem>();
+public DbSet<RestaurantQrCode> RestaurantQrCodes => Set<RestaurantQrCode>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -75,7 +78,41 @@ public DbSet<Category> Categories => Set<Category>();
             entity.Property(member => member.CreatedAtUtc)
                 .IsRequired();
         });
+modelBuilder.Entity<Category>(entity =>
+{
+    entity.Property(c => c.Name)
+        .HasMaxLength(100)
+        .IsRequired();
 
+    entity.Property(c => c.Description)
+        .HasMaxLength(500);
+
+    entity.HasIndex(c => c.Name)
+        .IsUnique();
+});
+
+modelBuilder.Entity<MenuItem>(entity =>
+{
+    entity.Property(m => m.Name)
+        .HasMaxLength(150)
+        .IsRequired();
+
+    entity.Property(m => m.Description)
+        .HasMaxLength(1000);
+
+    entity.Property(m => m.Price)
+        .HasPrecision(18, 2);
+
+    entity.Property(m => m.ImageUrl)
+        .HasMaxLength(500);
+
+    entity.HasOne(m => m.Category)
+        .WithMany(c => c.MenuItems)
+        .HasForeignKey(m => m.CategoryId)
+        .OnDelete(DeleteBehavior.Restrict);
+
+    entity.HasIndex(m => m.CategoryId);
+});
 modelBuilder.Entity<PasswordChangeRequest>(entity =>
 {
     entity.HasKey(request => request.Id);
@@ -108,5 +145,15 @@ modelBuilder.Entity<PasswordChangeRequest>(entity =>
         request.Status
     });
 });   
+
+modelBuilder.Entity<RestaurantQrCode>()
+    .HasIndex(q => q.Token)
+    .IsUnique();
+
+modelBuilder.Entity<RestaurantQrCode>()
+    .Property(q => q.Token)
+    .HasMaxLength(100)
+    .IsRequired();
+    
     }
 }
