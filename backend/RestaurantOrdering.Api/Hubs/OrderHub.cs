@@ -1,10 +1,8 @@
 using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
 namespace RestaurantOrdering.Api.Hubs;
 
-[Authorize(Roles = "Manager,Staff")]
 public sealed class OrderHub : Hub
 {
     public override async Task OnConnectedAsync()
@@ -29,6 +27,13 @@ public sealed class OrderHub : Hub
                     Context.ConnectionId,
                     $"Staff:{accountId}");
             }
+        }
+        else
+        {
+            // Anonymous customer connection.
+            await Groups.AddToGroupAsync(
+                Context.ConnectionId,
+                "Customers");
         }
 
         await base.OnConnectedAsync();
@@ -57,6 +62,12 @@ public sealed class OrderHub : Hub
                     Context.ConnectionId,
                     $"Staff:{accountId}");
             }
+        }
+        else
+        {
+            await Groups.RemoveFromGroupAsync(
+                Context.ConnectionId,
+                "Customers");
         }
 
         await base.OnDisconnectedAsync(exception);

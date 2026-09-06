@@ -76,6 +76,9 @@ builder.Services.AddScoped<ManagerAccountSeeder>();
 builder.Services.AddScoped<IStaffService, StaffService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<IMenuItemService, MenuItemService>();
+builder.Services.AddScoped<IQrCodeService, QrCodeService>();
 builder.Services.AddSignalR();
 
 builder.Services.AddControllers();
