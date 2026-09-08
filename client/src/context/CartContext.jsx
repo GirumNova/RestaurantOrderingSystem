@@ -1,4 +1,10 @@
-import { createContext, useContext, useMemo, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
+import useSignalR from "../hooks/useSignalR";
 
 const CartContext = createContext(null);
 
@@ -17,6 +23,7 @@ export function CartProvider({ children }) {
             ? {
                 ...cartItem,
                 quantity: cartItem.quantity + quantity,
+                isAvailable: item.isAvailable,
               }
             : cartItem
         );
@@ -30,6 +37,7 @@ export function CartProvider({ children }) {
           price: item.price,
           imageUrl: item.imageUrl,
           quantity,
+          isAvailable: item.isAvailable,
         },
       ];
     });
@@ -67,6 +75,37 @@ export function CartProvider({ children }) {
     setCartItems([]);
   }
 
+  useSignalR({
+    MenuItemUpdated: (menuItem) => {
+      setCartItems((currentItems) =>
+        currentItems.map((item) =>
+          item.id === menuItem.id
+            ? {
+                ...item,
+                name: menuItem.name,
+                price: menuItem.price,
+                imageUrl: menuItem.imageUrl,
+                isAvailable: menuItem.isAvailable,
+              }
+            : item
+        )
+      );
+    },
+
+    MenuItemDeleted: (menuItemId) => {
+      setCartItems((currentItems) =>
+        currentItems.map((item) =>
+          item.id === menuItemId
+            ? {
+                ...item,
+                isAvailable: false,
+              }
+            : item
+        )
+      );
+    },
+  });
+
   const itemCount = useMemo(
     () =>
       cartItems.reduce(
@@ -79,7 +118,8 @@ export function CartProvider({ children }) {
   const subtotal = useMemo(
     () =>
       cartItems.reduce(
-        (total, item) => total + item.price * item.quantity,
+        (total, item) =>
+          total + item.price * item.quantity,
         0
       ),
     [cartItems]

@@ -56,35 +56,47 @@ export default function MenuItemManagement() {
     loadData();
   }, []);
 
-  useSignalR({
-    MenuItemCreated: (menuItem) => {
-      setMenuItems((current) => {
-        const exists = current.some(
-          (item) => item.id === menuItem.id
-        );
+useSignalR({
+  CategoryCreated: () => {
+    loadData();
+  },
 
-        if (exists) {
-          return current;
-        }
+  CategoryUpdated: () => {
+    loadData();
+  },
 
-        return [...current, menuItem];
-      });
-    },
+  CategoryDeleted: () => {
+    loadData();
+  },
 
-    MenuItemUpdated: (menuItem) => {
-      setMenuItems((current) =>
-        current.map((item) =>
-          item.id === menuItem.id ? menuItem : item
-        )
+  MenuItemCreated: (menuItem) => {
+    setMenuItems((current) => {
+      const exists = current.some(
+        (item) => item.id === menuItem.id
       );
-    },
 
-    MenuItemDeleted: (menuItemId) => {
-      setMenuItems((current) =>
-        current.filter((item) => item.id !== menuItemId)
-      );
-    },
-  });
+      if (exists) {
+        return current;
+      }
+
+      return [...current, menuItem];
+    });
+  },
+
+  MenuItemUpdated: (menuItem) => {
+    setMenuItems((current) =>
+      current.map((item) =>
+        item.id === menuItem.id ? menuItem : item
+      )
+    );
+  },
+
+  MenuItemDeleted: (menuItemId) => {
+    setMenuItems((current) =>
+      current.filter((item) => item.id !== menuItemId)
+    );
+  },
+});
 
   async function handleCreate(event) {
     event.preventDefault();

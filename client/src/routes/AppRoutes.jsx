@@ -6,6 +6,8 @@ import StaffDashboard from "../pages/staff/StaffDashboard";
 import CustomerMenuPage from "../pages/customer/CustomerMenuPage";
 import CartPage from "../pages/customer/CartPage";
 import QrMenuPage from "../pages/customer/QrMenuPage";
+import OrderTrackingPage from "../pages/customer/OrderTrackingPage";
+import OrderConfirmationPage from "../pages/customer/OrderConfirmationPage";
 import RoleRoute from "./RoleRoute";
 
 export default function AppRoutes() {
@@ -25,6 +27,14 @@ export default function AppRoutes() {
 <Route
   path="/cart"
   element={<CartPage />}
+/>
+<Route
+  path="/order/:orderNumber"
+  element={<OrderTrackingPage />}
+/>
+<Route
+  path="/order-confirmation/:orderNumber"
+  element={<OrderConfirmationPage />}
 />
     <Route element={<ProtectedRoute />}>
     <Route element={<RoleRoute allowedRoles={[1]} />}>
