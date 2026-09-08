@@ -21,6 +21,10 @@ public DbSet<Category> Categories => Set<Category>();
 
 public DbSet<MenuItem> MenuItems => Set<MenuItem>();
 public DbSet<RestaurantQrCode> RestaurantQrCodes => Set<RestaurantQrCode>();
+
+public DbSet<Order> Orders => Set<Order>();
+public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -154,6 +158,55 @@ modelBuilder.Entity<RestaurantQrCode>()
     .Property(q => q.Token)
     .HasMaxLength(100)
     .IsRequired();
+
+    modelBuilder.Entity<Order>(entity =>
+{
+    entity.HasKey(o => o.Id);
+
+    entity.Property(o => o.OrderNumber)
+        .IsRequired()
+        .HasMaxLength(50);
+
+    entity.HasIndex(o => o.OrderNumber)
+        .IsUnique();
+
+    entity.Property(o => o.SubtotalAmount)
+        .HasPrecision(18, 2);
+
+    entity.Property(o => o.TaxAmount)
+        .HasPrecision(18, 2);
+
+    entity.Property(o => o.TotalAmount)
+        .HasPrecision(18, 2);
+
+    entity.Property(o => o.RejectionReason)
+        .HasMaxLength(500);
+
+    entity.HasMany(o => o.OrderItems)
+        .WithOne(oi => oi.Order)
+        .HasForeignKey(oi => oi.OrderId)
+        .OnDelete(DeleteBehavior.Cascade);
+});
+
+modelBuilder.Entity<OrderItem>(entity =>
+{
+    entity.HasKey(oi => oi.Id);
+
+    entity.Property(oi => oi.ItemName)
+        .IsRequired()
+        .HasMaxLength(150);
+
+    entity.Property(oi => oi.UnitPrice)
+        .HasPrecision(18, 2);
+
+    entity.Property(oi => oi.LineTotal)
+        .HasPrecision(18, 2);
+
+    entity.HasOne(oi => oi.MenuItem)
+        .WithMany()
+        .HasForeignKey(oi => oi.MenuItemId)
+        .OnDelete(DeleteBehavior.Restrict);
+});
     
     }
 }

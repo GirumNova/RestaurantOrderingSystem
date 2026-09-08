@@ -79,6 +79,7 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IMenuItemService, MenuItemService>();
 builder.Services.AddScoped<IQrCodeService, QrCodeService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddSignalR();
 
 builder.Services.AddControllers();
