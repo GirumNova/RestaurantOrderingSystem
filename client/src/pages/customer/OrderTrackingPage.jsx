@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import useSignalR from "../../hooks/useSignalR";
 import { useNavigate, useParams } from "react-router-dom";
 
 export default function OrderTrackingPage() {
@@ -42,7 +43,19 @@ const navigate = useNavigate();
       trackOrder(urlOrderNumber);
     }
   }, [urlOrderNumber]);
-
+  useSignalR(
+    {
+      OrderStatusUpdated: (updatedOrder) => {
+        if (
+          updatedOrder.orderNumber?.toUpperCase() ===
+          urlOrderNumber?.toUpperCase()
+        ) {
+          setOrder(updatedOrder);
+        }
+      },
+    },
+    urlOrderNumber
+  );
   return (
     <main>
       <h1>Track Your Order</h1>

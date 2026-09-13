@@ -37,17 +37,19 @@ export default function AppRoutes() {
   element={<OrderConfirmationPage />}
 />
     <Route element={<ProtectedRoute />}>
-    <Route element={<RoleRoute allowedRoles={[1]} />}>
-        <Route
-        path="/manager"
-        element={<ManagerDashboard />}
-        />
-    </Route>
+      <Route element={<RoleRoute allowedRoles={[1]} />}>
+        <Route path="/manager" element={<ManagerDashboard />} />
+        <Route path="/manager/:view" element={<ManagerDashboard />} />
+      </Route>
     </Route>
     <Route element={<ProtectedRoute />}>
   <Route element={<RoleRoute allowedRoles={[2]} />}>
     <Route
       path="/staff"
+      element={<StaffDashboard />}
+    />
+    <Route
+      path="/staff/:view"
       element={<StaffDashboard />}
     />
   </Route>

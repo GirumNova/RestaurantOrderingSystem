@@ -17,6 +17,130 @@ public sealed class StaffController : ControllerBase
         _staffService = staffService;
     }
 
+[HttpGet]
+public async Task<ActionResult<List<StaffResponse>>> GetAllStaff()
+{
+    var staff = await _staffService.GetAllStaffAsync();
+
+    return Ok(staff);
+}
+[HttpGet("{id:int}")]
+public async Task<ActionResult<StaffResponse>> GetStaffById(
+    int id)
+{
+    try
+    {
+        var staff = await _staffService.GetStaffByIdAsync(id);
+
+        return Ok(staff);
+    }
+    catch (InvalidOperationException ex)
+    {
+        return NotFound(new
+        {
+            message = ex.Message
+        });
+    }
+}
+
+[HttpPut("{id:int}")]
+public async Task<ActionResult<StaffResponse>> UpdateStaff(
+    int id,
+    UpdateStaffRequest request)
+{
+    try
+    {
+        return Ok(await _staffService.UpdateStaffAsync(id, request));
+    }
+    catch (InvalidOperationException ex)
+    {
+        return Conflict(new { message = ex.Message });
+    }
+}
+
+[HttpPut("{id:int}/status")]
+public async Task<IActionResult> UpdateStaffStatus(
+    int id,
+    [FromBody] bool isActive)
+{
+    try
+    {
+        await _staffService.UpdateStaffStatusAsync(id, isActive);
+        return Ok(new { message = "Staff status updated successfully." });
+    }
+    catch (InvalidOperationException ex)
+    {
+        return NotFound(new { message = ex.Message });
+    }
+}
+
+[HttpPost("{id:int}/members")]
+public async Task<ActionResult<StaffMemberResponse>> AddStaffMember(
+    int id,
+    CreateStaffMemberRequest request)
+{
+    try
+    {
+        return Ok(await _staffService.AddStaffMemberAsync(id, request));
+    }
+    catch (InvalidOperationException ex)
+    {
+        return NotFound(new { message = ex.Message });
+    }
+}
+
+[HttpPut("{id:int}/members/{memberId:int}")]
+public async Task<ActionResult<StaffMemberResponse>> UpdateStaffMember(
+    int id,
+    int memberId,
+    UpdateStaffMemberRequest request)
+{
+    try
+    {
+        return Ok(await _staffService.UpdateStaffMemberAsync(
+            id, memberId, request));
+    }
+    catch (InvalidOperationException ex)
+    {
+        return NotFound(new { message = ex.Message });
+    }
+}
+
+[HttpPut("{id:int}/members/{memberId:int}/status")]
+public async Task<IActionResult> UpdateStaffMemberStatus(
+    int id,
+    int memberId,
+    [FromBody] bool isActive)
+{
+    try
+    {
+        await _staffService.UpdateStaffMemberStatusAsync(
+            id, memberId, isActive);
+
+        return Ok(new { message = "Staff member status updated successfully." });
+    }
+    catch (InvalidOperationException ex)
+    {
+        return NotFound(new { message = ex.Message });
+    }
+}
+
+[HttpDelete("{id:int}/members/{memberId:int}")]
+public async Task<IActionResult> DeleteStaffMember(
+    int id,
+    int memberId)
+{
+    try
+    {
+        await _staffService.DeleteStaffMemberAsync(id, memberId);
+
+        return Ok(new { message = "Staff member deleted successfully." });
+    }
+    catch (InvalidOperationException ex)
+    {
+        return NotFound(new { message = ex.Message });
+    }
+}
     [HttpPost]
     public async Task<ActionResult<StaffResponse>> CreateStaff(
         CreateStaffRequest request)

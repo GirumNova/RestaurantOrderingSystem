@@ -1,18 +1,24 @@
+
 using Microsoft.EntityFrameworkCore;
 using RestaurantOrdering.Api.Data;
 using RestaurantOrdering.Api.DTOs.Order;
-
+using RestaurantOrdering.Api.Models.Enums;
+using Microsoft.AspNetCore.SignalR;
+using RestaurantOrdering.Api.Hubs;
 namespace RestaurantOrdering.Api.Services;
 
 public sealed class OrderService : IOrderService
 {
-    private readonly ApplicationDbContext _db;
+private readonly ApplicationDbContext _db;
+private readonly IHubContext<OrderHub> _hubContext;
 
-    public OrderService(ApplicationDbContext db)
-    {
-        _db = db;
-    }
-
+public OrderService(
+    ApplicationDbContext db,
+    IHubContext<OrderHub> hubContext)
+{
+    _db = db;
+    _hubContext = hubContext;
+}
 public async Task<OrderResponse> CreateAsync(
     CreateOrderRequest request)
 {
@@ -111,16 +117,138 @@ public async Task<OrderResponse> CreateAsync(
 
         _db.Orders.Add(order);
 
-        await _db.SaveChangesAsync();
-        await transaction.CommitAsync();
+await _db.SaveChangesAsync();
+await transaction.CommitAsync();
 
-        return MapToResponse(order);
+var response = MapToResponse(order);
+
+await _hubContext.Clients
+    .Group("Staff")
+    .SendAsync(
+        "NewOrderCreated",
+        response);
+
+return response;
     }
     catch
     {
         await transaction.RollbackAsync();
         throw;
     }
+}
+
+
+public async Task<OrderResponse?> UpdateStatusAsync(
+    string orderNumber,
+    OrderStatus status,
+    string? rejectionReason = null)
+{
+    var order = await _db.Orders
+        .Include(o => o.OrderItems)
+        .FirstOrDefaultAsync(o => o.OrderNumber == orderNumber);
+
+    if (order == null)
+    {
+        return null;
+    }
+
+    ValidateStatusTransition(
+        order.Status,
+        status,
+        rejectionReason);
+
+    order.Status = status;
+    order.UpdatedAtUtc = DateTime.UtcNow;
+
+    if (status == OrderStatus.Rejected)
+    {
+        order.RejectionReason = rejectionReason!.Trim();
+    }
+    else
+    {
+        order.RejectionReason = null;
+    }
+
+await _db.SaveChangesAsync();
+
+var response = MapToResponse(order);
+
+await _hubContext.Clients
+    .Group($"Order:{order.OrderNumber}")
+    .SendAsync(
+        "OrderStatusUpdated",
+        response);
+
+await _hubContext.Clients
+    .Group("Staff")
+    .SendAsync(
+        "OrderStatusUpdated",
+        response);
+
+await _hubContext.Clients
+    .Group("Managers")
+    .SendAsync(
+        "OrderStatusUpdated",
+        response);
+
+return response;
+}
+
+private static void ValidateStatusTransition(
+    OrderStatus currentStatus,
+    OrderStatus newStatus,
+    string? rejectionReason)
+{
+    if (currentStatus == OrderStatus.Pending)
+    {
+        if (newStatus == OrderStatus.Preparing)
+        {
+            return;
+        }
+
+        if (newStatus == OrderStatus.Rejected)
+        {
+            if (string.IsNullOrWhiteSpace(rejectionReason))
+            {
+                throw new InvalidOperationException(
+                    "A rejection reason is required.");
+            }
+
+            return;
+        }
+    }
+
+    if (currentStatus == OrderStatus.Preparing &&
+        newStatus == OrderStatus.Ready)
+    {
+        return;
+    }
+
+    if (currentStatus == OrderStatus.Ready &&
+        newStatus == OrderStatus.Completed)
+    {
+        return;
+    }
+
+    throw new InvalidOperationException(
+        $"Invalid order status transition: {currentStatus} to {newStatus}.");
+}
+public async Task<List<OrderResponse>> GetStaffOrdersAsync()
+{
+    var orders = await _db.Orders
+        .AsNoTracking()
+        .Include(o => o.OrderItems)
+        .Where(o =>
+            o.Status == OrderStatus.Pending ||
+            o.Status == OrderStatus.Preparing ||
+            o.Status == OrderStatus.Ready ||
+            o.Status == OrderStatus.Completed)
+        .OrderBy(o => o.CreatedAtUtc)
+        .ToListAsync();
+
+    return orders
+        .Select(MapToResponse)
+        .ToList();
 }
 private async Task<string> GenerateOrderNumber()
 {

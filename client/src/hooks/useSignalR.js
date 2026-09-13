@@ -1,7 +1,10 @@
 import { useEffect, useRef } from "react";
 import { createSignalRConnection } from "../services/signalRService";
 
-export default function useSignalR(eventHandlers = {}) {
+export default function useSignalR(
+  eventHandlers = {},
+  orderNumber = null
+) {
   const connectionRef = useRef(null);
 
   useEffect(() => {
@@ -18,6 +21,14 @@ export default function useSignalR(eventHandlers = {}) {
     async function startConnection() {
       try {
         await connection.start();
+
+        if (orderNumber) {
+          await connection.invoke(
+            "JoinOrderGroup",
+            orderNumber
+          );
+        }
+
         console.log("SignalR connected.");
       } catch (error) {
         console.error(
@@ -36,10 +47,19 @@ export default function useSignalR(eventHandlers = {}) {
         }
       );
 
+      if (orderNumber) {
+        connection
+          .invoke(
+            "LeaveOrderGroup",
+            orderNumber
+          )
+          .catch(() => {});
+      }
+
       connection.stop();
       connectionRef.current = null;
     };
-  }, []);
+  }, [orderNumber]);
 
   return connectionRef;
 }

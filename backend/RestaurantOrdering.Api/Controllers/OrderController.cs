@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RestaurantOrdering.Api.DTOs.Order;
+using RestaurantOrdering.Api.Models.Enums;
 using RestaurantOrdering.Api.Services;
 
 namespace RestaurantOrdering.Api.Controllers;
@@ -53,5 +55,46 @@ public sealed class OrderController : ControllerBase
         }
 
         return Ok(order);
+    }
+
+    [HttpGet("staff")]
+    [Authorize(Roles = "Staff")]
+    public async Task<IActionResult> GetStaffOrders()
+    {
+        var orders = await _orderService.GetStaffOrdersAsync();
+
+        return Ok(orders);
+    }
+
+    [HttpPut("{orderNumber}/status")]
+    [Authorize(Roles = "Staff")]
+    public async Task<IActionResult> UpdateStatus(
+        string orderNumber,
+        [FromBody] UpdateOrderStatusRequest request)
+    {
+        try
+        {
+            var order = await _orderService.UpdateStatusAsync(
+                orderNumber,
+                request.Status,
+                request.RejectionReason);
+
+            if (order == null)
+            {
+                return NotFound(new
+                {
+                    message = "Order not found."
+                });
+            }
+
+            return Ok(order);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new
+            {
+                message = ex.Message
+            });
+        }
     }
 }

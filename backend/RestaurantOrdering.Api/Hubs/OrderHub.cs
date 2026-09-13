@@ -18,25 +18,43 @@ public sealed class OrderHub : Hub
         }
         else if (role == "Staff")
         {
-            var accountId = Context.User?
-                .FindFirstValue(ClaimTypes.NameIdentifier);
-
-            if (!string.IsNullOrWhiteSpace(accountId))
-            {
-                await Groups.AddToGroupAsync(
-                    Context.ConnectionId,
-                    $"Staff:{accountId}");
-            }
+            await Groups.AddToGroupAsync(
+                Context.ConnectionId,
+                "Staff");
         }
         else
         {
-            // Anonymous customer connection.
             await Groups.AddToGroupAsync(
                 Context.ConnectionId,
                 "Customers");
         }
 
         await base.OnConnectedAsync();
+    }
+
+    public async Task JoinOrderGroup(string orderNumber)
+    {
+        if (string.IsNullOrWhiteSpace(orderNumber))
+        {
+            throw new HubException(
+                "Order number is required.");
+        }
+
+        await Groups.AddToGroupAsync(
+            Context.ConnectionId,
+            GetOrderGroupName(orderNumber));
+    }
+
+    public async Task LeaveOrderGroup(string orderNumber)
+    {
+        if (string.IsNullOrWhiteSpace(orderNumber))
+        {
+            return;
+        }
+
+        await Groups.RemoveFromGroupAsync(
+            Context.ConnectionId,
+            GetOrderGroupName(orderNumber));
     }
 
     public override async Task OnDisconnectedAsync(
@@ -53,15 +71,9 @@ public sealed class OrderHub : Hub
         }
         else if (role == "Staff")
         {
-            var accountId = Context.User?
-                .FindFirstValue(ClaimTypes.NameIdentifier);
-
-            if (!string.IsNullOrWhiteSpace(accountId))
-            {
-                await Groups.RemoveFromGroupAsync(
-                    Context.ConnectionId,
-                    $"Staff:{accountId}");
-            }
+            await Groups.RemoveFromGroupAsync(
+                Context.ConnectionId,
+                "Staff");
         }
         else
         {
@@ -71,5 +83,11 @@ public sealed class OrderHub : Hub
         }
 
         await base.OnDisconnectedAsync(exception);
+    }
+
+    private static string GetOrderGroupName(
+        string orderNumber)
+    {
+        return $"Order:{orderNumber.Trim().ToUpperInvariant()}";
     }
 }
